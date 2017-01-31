@@ -55,6 +55,8 @@ class Tracker:
         self.current_frame=0
 
     def next_loaded_frame(self):
+        if self.current_frame >= len(self.all_frames):
+            return None
         im = self.all_frames[self.current_frame]
         self.current_frame += 1
         return im
@@ -107,6 +109,7 @@ class Tracker:
 
     def track(self, directory,initial, video=None, boxes=None, video_nodraw=None):
         test=False
+        success = True
         next_frame_func = self.next_frame
         if self.all_frames is not None:
             next_frame_func = self.next_loaded_frame
@@ -120,7 +123,7 @@ class Tracker:
         if video is not None:
             video = []
         if boxes is not None:
-            boxes = []
+            boxes = [self.gtruth]
         test = False
         while True:
             time0 = time.clock()
@@ -143,6 +146,12 @@ class Tracker:
 
             points = self.regress(next_crop, target)
             bbox = loose_bbox.get_tight_bbox(points, next_crop,test, frame, edge_x, edge_y)
+            # print bbox.x1, bbox.x2, bbox.y1, bbox.y2
+            for s in [bbox.x2-bbox.x1, bbox.y2-bbox.y1]:
+                if s == 0:
+                    success = False
+            if success == False:
+                break
             target = bbox.crop_frame(frame)
             prev_frame = frame
             i+=1 
@@ -153,7 +162,7 @@ class Tracker:
                 #video.append(next_crop)
             if boxes is not None:
                 boxes.append(bbox)
-        return video, boxes, video_nodraw
+        return video, boxes, video_nodraw, success
 
 def animate(images, name):
     import moviepy.editor as mpy
@@ -162,7 +171,7 @@ def animate(images, name):
         tmp = images[n,:,:,:]
         return tmp
     clip = mpy.ImageSequenceClip([images[i] for i in range(leng)], fps=20)
-    clip.write_gif("/home/coline/visual_features/tracking/videos/"+name+".gif",fps=20)
+    clip.write_gif("/home/coline/visual_features/detection/tracking/videos/"+name+".gif",fps=20)
     return clip
 
 
@@ -170,7 +179,7 @@ if __name__ == "__main__":
     tracker = Tracker()
 
     #hand2 has problem at 201, ball 448x
-    for obj in ['ball', 'fish1', 'fernando', 'gymnastics', 'drunk', 'diving', 'skating', 'sphere', 'jogging', 'polarbear', 'motocross']:
+    for obj in ['gymnastics']:#['ball', 'fish1', 'fernando', 'gymnastics', 'drunk', 'diving', 'skating', 'sphere', 'jogging', 'polarbear', 'motocross']:
         print "----------------------- obj:",obj," ------------------"
         directory = '/home/coline/packages/GOTURN/vot2014/'+obj
         with open(directory+'/groundtruth.txt') as f:
@@ -182,7 +191,7 @@ if __name__ == "__main__":
         video,_, _ = tracker.track('/home/coline/packages/GOTURN/vot2014/'+obj, initial=gtruth,video =[])
         for f in range(len(video)):
             # print f
-            cv2.imwrite("/home/coline/visual_features/tracking/videos/"+'vot_'+obj+'/'+str(f)+'.jpg', video[f])
+            cv2.imwrite("/home/coline/visual_features/detection/tracking/videos/"+'vot_'+obj+'/'+str(f)+'.jpg', video[f])
         print "video was", len(video), "long"
         # import IPython
         # IPython.embed()

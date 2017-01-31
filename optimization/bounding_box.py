@@ -26,6 +26,7 @@ class BBox:
         frame = frame[self.y1:self.y2, self.x1:self.x2, :]
         for s in frame.shape:
             if s==0:
+                print "crop_frame"
                 import IPython
                 IPython.embed()
 
@@ -64,6 +65,7 @@ class BBox:
 
         for s in [newBB.x2-newBB.x1, newBB.y2-newBB.y1]:
             if s == 0:
+                print "compute_crop_loc"
                 import IPython
                 IPython.embed()
 
@@ -125,13 +127,15 @@ class BBox:
         real_y1 = max(p1+self.y1-edge_y,0)
         real_y2 = min(p2+self.y1-edge_y, frame.shape[0])
         tight_bbox = BBox(self.cf)
-        # import IPython; IPython.embed()
 
         for s in [real_x2-real_x1, real_y2-real_y1]:
             if s == 0:
+                print "get_tight_bbox"
                 import IPython
                 IPython.embed()
         tight_bbox.set_xy(real_x1,real_x2, real_y1, real_y2)
+        # import IPython; IPython.embed()
+
         return tight_bbox
 
     # def uncenter(self, image_curr, search_location, edge_x, edge_y):
